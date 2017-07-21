@@ -1,6 +1,7 @@
 # sql-to-laravel-migration
 
 A script to genenerate Laravel migrations from existing MySQL database.
+
 It isn't super comprehensive and is meant to quicken the setting up of Laravel migrations on an existing database.
 
 # Specs
@@ -17,6 +18,7 @@ Python2.7
 ## config.json
 
 only_include_tables - takes precedence if tables are specified
+
 exclude_tables - tables will be excluded
 
 ## terminal
