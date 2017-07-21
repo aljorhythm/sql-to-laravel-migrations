@@ -6,7 +6,7 @@ import sys
 
 config_file_name = 'config.json' if len(sys.argv) < 2 else sys.argv[1]
 
-with open('config.json') as data_file:
+with open(config_file_name) as data_file:
     config = json.load(data_file)
 
 datetime_prefix_format = '%Y_%m_%d_%H%M%S'
