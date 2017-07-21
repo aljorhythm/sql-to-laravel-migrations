@@ -37,20 +37,21 @@ if len(only_include_tables) > 0:
 else:
     table_names = [table_name for table_name in table_names if not table_name in exclude_tables ]
 
-field_type_mappings = {
+field_type_name_mappings = {
     'tinyint' : 'tinyInteger',
     'int' : 'integer',
     'varchar' : 'string'
 }
 
-filter_params = {
+filter_field_type_params = {
     'tinyInteger' : lambda x : [],
-    'integer' : lambda x : []
+    'integer' : lambda x : [],
+    'increments' : lambda x : []
 }
 
-field_type_filter = {
-    'id' : 'increments'
-}
+nullable_field_types = [
+    'varchar'
+]
 
 for table_name in table_names:
     print "Table: {0}".format(table_name)
@@ -59,22 +60,47 @@ for table_name in table_names:
 
     table_schema_codes = []
 
+    exclude_fields = ['created_at', 'updated_at']
+
     for row in cursor:
-        field_name, right = row[:2]
+        field, field_type, null, key, default, extra = row
 
-        right_split = right.split('(')
-        field_type = right_split[0]
-        params = right_split[1].split(')')[0].split(',') if len(right_split) > 1 else []
+        if field in exclude_fields:
+            continue
 
-        field_type = field_type.lower()
-        field_type = field_type_mappings[field_type] if field_type in field_type_mappings else field_type;
-        field_type = field_type_filter[field_name] if field_name in field_type_filter else field_type
+        field_type_split = field_type.split('(')
 
-        params = filter_params[field_type](params) if field_type in filter_params else params
-        migration_params = [ param for param in ["'{0}'".format(field_name)] + params if param.strip() != "" ]
-        table_schema_code = "$table->{0}({1});".format(field_type, ", ".join(migration_params));
+        field_type_name = field_type_split[0]
+        field_type_name = field_type_name.lower()
+        field_type_name = field_type_name_mappings[field_type_name] if field_type_name in field_type_name_mappings else field_type_name
+
+        field_type_settings = field_type_split[1].split(' ') if len(field_type_split) > 1 else []
+
+        field_type_params_string = field_type_split[1].split(')')[0] if len(field_type_split) > 1 else ''
+        field_type_params = field_type_params_string.split(',') if field_type_params_string != '' else []
+        field_type_params = filter_field_type_params[field_type_name](field_type_params) if field_type_name in filter_field_type_params else field_type_params
+
+        if extra == 'auto_increment' and field == 'id':
+            field_type_name = 'increments'
+
+        appends = []
+        if null == 'YES' and field_type_name in nullable_field_types:
+            appends.append('->nullable()')
+        if 'unsigned' in field_type_settings and field_type_name != 'increments':
+            appends.append('->unsigned()')
+        if default is not None:
+            if default == 'CURRENT_TIMESTAMP':
+                appends.append("->default(\DB::raw('{0}'))".format(default))
+            else:
+                appends.append("->default('{0}')".format(default))
+
+        migration_params = [ param for param in ["'{0}'".format(field)] + field_type_params if param.strip() != "" ]
+        table_schema_code = "$table->{0}({1}){2};".format(field_type_name, ", ".join(migration_params), "".join(appends));
 
         table_schema_codes.append(table_schema_code)
+
+    table_schema_code = "$table->timestamps();";
+    table_schema_codes.append(table_schema_code)
 
     cursor = cnx.cursor()
     query = ("SHOW CREATE TABLE {0}".format(table_name))
@@ -118,8 +144,10 @@ class {classname} extends Migration
 '''
     code = code.format( sql = sql, classname = "Create{0}Table".format(table_name.replace('_', ' ').title().replace(' ', '')), table_schema_codes = "\n        ".join(table_schema_codes), table_name = table_name)
 
-    f = open("{0}/{1}_create_{2}_table.php".format(folder, datetime_prefix, table_name), 'w')
+    output_file_name = "{0}/{1}_create_{2}_table.php".format(folder, datetime_prefix, table_name)
+    f = open(output_file_name, 'w')
     f.write(code)
+    print "File: {0}".format(output_file_name)
 
 cursor.close()
 
