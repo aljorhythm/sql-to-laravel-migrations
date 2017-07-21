@@ -2,7 +2,7 @@
   "user" : "",
   "password" : "",
   "host" : "",
-  "port" : "",
+  "port" : 3000,
   "database" : "",
   "exclude_tables" : [
 
