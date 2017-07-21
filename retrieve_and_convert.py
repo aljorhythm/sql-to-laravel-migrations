@@ -2,6 +2,9 @@ import mysql.connector
 import datetime
 import os
 import json
+import sys
+
+config_file_name = 'config.json' if len(sys.argv) < 2 else sys.argv[1]
 
 with open('config.json') as data_file:
     config = json.load(data_file)
