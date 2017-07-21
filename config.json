@@ -1,0 +1,12 @@
+{
+  "user" : "",
+  "password" : "",
+  "host" : "",
+  "port" : "",
+  "database" : "",
+  "exclude_tables" : [
+
+  ],
+  "only_include_tables" : [
+  ]
+}
