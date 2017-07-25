@@ -99,7 +99,7 @@ for table_name in table_names:
         migration_params = [ param for param in ["'{0}'".format(field)] + field_type_params if param.strip() != "" ]
         table_schema_code = "$table->{0}({1}){2};".format(field_type_name, ", ".join(migration_params), "".join(appends));
 
-        table_schema_codes.append("// " + json.dumps(row) + "\n")
+        table_schema_codes.append("// " + json.dumps(row))
         table_schema_codes.append(table_schema_code)
 
     table_schema_code = "$table->timestamps();";
@@ -128,9 +128,9 @@ class {classname} extends Migration
      */
     public function up()
     {{
-      Schema::create('{table_name}', function (Blueprint $table) {{
-        {table_schema_codes}
-      }});
+        Schema::create('{table_name}', function (Blueprint $table) {{
+            {table_schema_codes}
+        }});
     }}
 
     /**
@@ -150,6 +150,7 @@ class {classname} extends Migration
     output_file_name = "{0}/{1}_create_{2}_table.php".format(folder, datetime_prefix, table_name)
     f = open(output_file_name, 'w')
     f.write(code)
+    print code
     print "File: {0}".format(output_file_name)
 
 cursor.close()

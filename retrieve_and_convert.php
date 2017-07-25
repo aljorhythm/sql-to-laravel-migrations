@@ -14,7 +14,9 @@ $datetime_prefix = date($datetime_prefix_format);
 
 $folder = 'output/' . $datetime_prefix;
 
-mkdir($folder);
+if(!is_dir($folder)){
+    mkdir($folder);
+}
 
 $user = $config['user'];
 $password = $config['password'];
@@ -30,8 +32,6 @@ $mysqli = new mysqli($host . ":" . $port, $user, $password, $database);
 if ($mysqli->connect_errno) {
     printf("Connect failed: %s\n", $mysqli->connect_error);
     exit();
-}else {
-    printf("Connected %s\n", $host);
 }
 
 $query = (sprintf("select TABLE_SCHEMA, TABLE_NAME, TABLE_TYPE from `information_schema`.`tables` where TABLE_SCHEMA = '%s';", ($database)));
@@ -78,8 +78,8 @@ foreach ($table_names as $table_name){
 
     $fields = [];
     if($result = $mysqli->query($query)){
-        var_dump($result);
-        while($row = $result->fetch_array()){
+        while($row = $result->fetch_assoc()){
+            $row = array_values($row);
             $field = $row[0];
             $field_type = $row[1];
             $null = $row[2];
@@ -95,13 +95,13 @@ foreach ($table_names as $table_name){
 
             $field_type_name = $field_type_split[0];
             $field_type_name = strtolower($field_type_name);
-            $field_type_name =  in_array($field_type_name, $field_type_name_mappings) ? $field_type_name_mappings[$field_type_name] : $field_type_name;
+            $field_type_name = array_key_exists($field_type_name, $field_type_name_mappings) ? $field_type_name_mappings[$field_type_name] : $field_type_name;
 
             $field_type_settings = count($field_type_split) > 1 ? explode(' ', $field_type_split[1]) : [];
 
             $field_type_params_string = count($field_type_split) > 1 ? explode(')', $field_type_split[1])[0] : '';
             $field_type_params = $field_type_params_string != '' ? explode(',', $field_type_params_string) : [];
-            $field_type_params = in_array($field_type_name, $filter_field_type_params) ? $filter_field_type_params[$field_type_name]($field_type_params) : $field_type_params;
+            $field_type_params = array_key_exists($field_type_name, $filter_field_type_params) ? $filter_field_type_params[$field_type_name]($field_type_params) : $field_type_params;
 
             if($extra == 'auto_increment' && $field == 'id'){
                 $field_type_name = 'increments';
@@ -152,39 +152,42 @@ foreach ($table_names as $table_name){
     $table_schema_codes = implode("\n        ", $table_schema_codes);
 
     $code = "
-  <?php
 
-  use Illuminate\Support\Facades\Schema;
-  use Illuminate\Database\Schema\Blueprint;
-  use Illuminate\Database\Migrations\Migration;
+<?php
 
-  class $classname extends Migration
-  {
-      /**
-       * Run the migrations.
-       $sql
-       * @return void
-       */
-      public function up()
-      {{
-        Schema::create('$table_name', function (Blueprint \$table) {{
-        $table_schema_codes;
-        }});
-      }}
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
 
-      /**
-       * Reverse the migrations.
-       *
-       * @return void
-       */
-      public function down()
-      {{
-          Schema::dropIfExists('$table_name');
-      }}
-  }}
-  ?>
+class $classname extends Migration
+{
+    /**
+     * Run the migrations.
+     $sql
+
+     * @return void
+     */
+    public function up()
+    {
+        Schema::create('$table_name', function (Blueprint \$table) {
+            $table_schema_codes
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        Schema::dropIfExists('$table_name');
+    }
+}
+?>
 ";
     $output_file_name = sprintf("%s/%s_create_%s_table.php", $folder, $datetime_prefix, $table_name);
+    echo $code . "\n";
     file_put_contents ( $output_file_name , $code );
     echo "File: $output_file_name";
 }
