@@ -6,7 +6,7 @@ It isn't super comprehensive and is meant to quicken the setting up of Laravel m
 
 # Specs
 
-Python2.7
+Python2.7 or PHP 7
 
 # Set Up
 
@@ -23,8 +23,28 @@ exclude_tables - tables will be excluded
 
 ## terminal
 
+### python
+
 ```
 python retrieve_and_convert.py
+```
+
+or
+
+```
+python retrieve_and_convert.py <config file>
+```
+
+### php
+
+```
+php -e retrieve_and_convert.php
+```
+
+or
+
+```
+php -e retrieve_and_convert.php <config file>
 ```
 
 # Output
