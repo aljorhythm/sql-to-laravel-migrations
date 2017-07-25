@@ -50,7 +50,9 @@ filter_field_type_params = {
 }
 
 nullable_field_types = [
-    'varchar'
+    'varchar',
+    'timestamp',
+    'datetime'
 ]
 
 for table_name in table_names:
@@ -97,6 +99,7 @@ for table_name in table_names:
         migration_params = [ param for param in ["'{0}'".format(field)] + field_type_params if param.strip() != "" ]
         table_schema_code = "$table->{0}({1}){2};".format(field_type_name, ", ".join(migration_params), "".join(appends));
 
+        table_schema_codes.append("// " + json.dumps(row) + "\n")
         table_schema_codes.append(table_schema_code)
 
     table_schema_code = "$table->timestamps();";
