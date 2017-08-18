@@ -34,7 +34,7 @@ if ($mysqli->connect_errno) {
     exit();
 }
 
-$query = (sprintf("select TABLE_SCHEMA, TABLE_NAME, TABLE_TYPE from `information_schema`.`tables` where TABLE_SCHEMA = '%s';", ($database)));
+$query = (sprintf("select TABLE_SCHEMA, TABLE_NAME, TABLE_TYPE, TABLE_COMMENT from `information_schema`.`tables` where TABLE_SCHEMA = '%s';", ($database)));
 
 $tables = [];
 
@@ -71,7 +71,7 @@ $nullable_field_types = [
 
 foreach ($table_names as $table_name){
     echo sprintf("Table: %s", $table_name);
-    $query = sprintf("show columns from %s", $table_name);
+    $query = sprintf("show full columns from %s", $table_name);
 
     $table_schema_codes = [];
     $exclude_fields = ['created_at', 'updated_at'];
@@ -82,10 +82,12 @@ foreach ($table_names as $table_name){
             $row = array_values($row);
             $field = $row[0];
             $field_type = $row[1];
-            $null = $row[2];
-            $key = $row[3];
-            $default = $row[4];
-            $extra = $row[5];
+            $collation = $row[2];
+            $null = $row[3];
+            $key = $row[4];
+            $default = $row[5];
+            $extra = $row[6];
+            $comment = $row[8];
 
             if(in_array($field, $exclude_fields)){
                 continue;
@@ -120,6 +122,9 @@ foreach ($table_names as $table_name){
                 }else{
                     $appends []= sprintf("->default('%s')", $default);
                 }
+            }
+            if($comment) {
+                $appends []= "->comment('{$comment}')";
             }
 
             $migration_params = array_merge([sprintf("'%s'", $field)], $field_type_params);
