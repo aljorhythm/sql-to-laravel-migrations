@@ -15,7 +15,7 @@ $datetime_prefix = date($datetime_prefix_format);
 $folder = 'output/' . $datetime_prefix;
 
 if(!is_dir($folder)){
-    mkdir($folder);
+    mkdir($folder, 0777, true);
 }
 
 $user = $config['user'];
