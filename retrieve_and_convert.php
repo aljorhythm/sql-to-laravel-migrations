@@ -18,6 +18,7 @@ if(!is_dir($folder)){
     mkdir($folder, 0777, true);
 }
 
+$debug = isset($config['debug']) ? $config['debug'] : false;
 $user = $config['user'];
 $password = $config['password'];
 $host = $config['host'];
@@ -133,14 +134,14 @@ foreach ($table_names as $table_name){
             });
 
 
-            $table_schema_code = sprintf("\$table->%s(%s)%s;", $field_type_name, implode(", ", $migration_params), implode("", $appends));
+            $table_schema_code = sprintf("    \$table->%s(%s)%s;", $field_type_name, implode(", ", $migration_params), implode("", $appends));
 
-            $table_schema_codes []= "// " . json_encode($row);
+            $debug and $table_schema_codes []= "// " . json_encode($row);
             $table_schema_codes []= $table_schema_code;
         };
     }
 
-    $table_schema_code = '$table->timestamps();';
+    $table_schema_code = '    $table->timestamps();';
     $table_schema_codes []= ($table_schema_code);
 
     $query = "SHOW INDEX FROM {$table_name};";
@@ -156,7 +157,7 @@ foreach ($table_names as $table_name){
 
     if (!empty($indexes)) {
         foreach ($indexes as $indexName => $index) {
-            $table_schema_codes[] = '$table->' . ($index['is_unique'] ? 'unique' : 'index') . '(["' . implode('", "', $index['keys']) .'"]);';
+            $table_schema_codes[] = '    $table->' . ($index['is_unique'] ? 'unique' : 'index') . '(["' . implode('", "', $index['keys']) .'"]);';
         }
     }
 
@@ -185,14 +186,13 @@ class $classname extends Migration
 {
     /**
      * Run the migrations.
-     $sql
-
+     *" . ($debug ? $sql : '') . "
      * @return void
      */
     public function up()
     {
         Schema::create('$table_name', function (Blueprint \$table) {
-            $table_schema_codes
+        $table_schema_codes
         });
     }
 
@@ -206,7 +206,7 @@ class $classname extends Migration
         Schema::dropIfExists('$table_name');
     }
 }
-?>
+
 ";
     $output_file_name = sprintf("%s/%s_create_%s_table.php", $folder, $datetime_prefix, $table_name);
     echo $code . "\n";
