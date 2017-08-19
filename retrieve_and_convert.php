@@ -143,7 +143,24 @@ foreach ($table_names as $table_name){
     $table_schema_code = '$table->timestamps();';
     $table_schema_codes []= ($table_schema_code);
 
-    $query = ("SHOW CREATE TABLE $table_name;");
+    $query = "SHOW INDEX FROM {$table_name};";
+
+    $indexes = [];
+    $results = $mysqli->query($query);
+    while($row = $results->fetch_array()){
+        if ($row[2] != 'PRIMARY') {
+            $indexes[$row[2]]['is_unique'] = $row[1] ? false : true;
+            $indexes[$row[2]]['keys'][] = $row[4];
+        }
+    }
+
+    if (!empty($indexes)) {
+        foreach ($indexes as $indexName => $index) {
+            $table_schema_codes[] = '$table->' . ($index['is_unique'] ? 'unique' : 'index') . '(["' . implode('", "', $index['keys']) .'"]);';
+        }
+    }
+
+    $query = ("SHOW CREATE TABLE {$table_name};");
 
     $sql = [];
     $results = $mysqli->query($query);
