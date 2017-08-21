@@ -15,9 +15,10 @@ $datetime_prefix = date($datetime_prefix_format);
 $folder = 'output/' . $datetime_prefix;
 
 if(!is_dir($folder)){
-    mkdir($folder);
+    mkdir($folder, 0777, true);
 }
 
+$debug = isset($config['debug']) ? $config['debug'] : false;
 $user = $config['user'];
 $password = $config['password'];
 $host = $config['host'];
@@ -34,7 +35,7 @@ if ($mysqli->connect_errno) {
     exit();
 }
 
-$query = (sprintf("select TABLE_SCHEMA, TABLE_NAME, TABLE_TYPE from `information_schema`.`tables` where TABLE_SCHEMA = '%s';", ($database)));
+$query = (sprintf("select TABLE_SCHEMA, TABLE_NAME, TABLE_TYPE, TABLE_COMMENT from `information_schema`.`tables` where TABLE_SCHEMA = '%s';", ($database)));
 
 $tables = [];
 
@@ -71,7 +72,7 @@ $nullable_field_types = [
 
 foreach ($table_names as $table_name){
     echo sprintf("Table: %s", $table_name);
-    $query = sprintf("show columns from %s", $table_name);
+    $query = sprintf("show full columns from %s", $table_name);
 
     $table_schema_codes = [];
     $exclude_fields = ['created_at', 'updated_at'];
@@ -82,10 +83,12 @@ foreach ($table_names as $table_name){
             $row = array_values($row);
             $field = $row[0];
             $field_type = $row[1];
-            $null = $row[2];
-            $key = $row[3];
-            $default = $row[4];
-            $extra = $row[5];
+            $collation = $row[2];
+            $null = $row[3];
+            $key = $row[4];
+            $default = $row[5];
+            $extra = $row[6];
+            $comment = $row[8];
 
             if(in_array($field, $exclude_fields)){
                 continue;
@@ -121,6 +124,9 @@ foreach ($table_names as $table_name){
                     $appends []= sprintf("->default('%s')", $default);
                 }
             }
+            if($comment) {
+                $appends []= "->comment('{$comment}')";
+            }
 
             $migration_params = array_merge([sprintf("'%s'", $field)], $field_type_params);
             $migration_params = array_filter($migration_params, function($param){
@@ -128,17 +134,34 @@ foreach ($table_names as $table_name){
             });
 
 
-            $table_schema_code = sprintf("\$table->%s(%s)%s;", $field_type_name, implode(", ", $migration_params), implode("", $appends));
+            $table_schema_code = sprintf("    \$table->%s(%s)%s;", $field_type_name, implode(", ", $migration_params), implode("", $appends));
 
-            $table_schema_codes []= "// " . json_encode($row);
+            $debug and $table_schema_codes []= "// " . json_encode($row);
             $table_schema_codes []= $table_schema_code;
         };
     }
 
-    $table_schema_code = '$table->timestamps();';
+    $table_schema_code = '    $table->timestamps();';
     $table_schema_codes []= ($table_schema_code);
 
-    $query = ("SHOW CREATE TABLE $table_name;");
+    $query = "SHOW INDEX FROM {$table_name};";
+
+    $indexes = [];
+    $results = $mysqli->query($query);
+    while($row = $results->fetch_array()){
+        if ($row[2] != 'PRIMARY') {
+            $indexes[$row[2]]['is_unique'] = $row[1] ? false : true;
+            $indexes[$row[2]]['keys'][] = $row[4];
+        }
+    }
+
+    if (!empty($indexes)) {
+        foreach ($indexes as $indexName => $index) {
+            $table_schema_codes[] = '    $table->' . ($index['is_unique'] ? 'unique' : 'index') . '(["' . implode('", "', $index['keys']) .'"]);';
+        }
+    }
+
+    $query = ("SHOW CREATE TABLE {$table_name};");
 
     $sql = [];
     $results = $mysqli->query($query);
@@ -163,14 +186,13 @@ class $classname extends Migration
 {
     /**
      * Run the migrations.
-     $sql
-
+     *" . ($debug ? $sql : '') . "
      * @return void
      */
     public function up()
     {
         Schema::create('$table_name', function (Blueprint \$table) {
-            $table_schema_codes
+        $table_schema_codes
         });
     }
 
@@ -184,7 +206,7 @@ class $classname extends Migration
         Schema::dropIfExists('$table_name');
     }
 }
-?>
+
 ";
     $output_file_name = sprintf("%s/%s_create_%s_table.php", $folder, $datetime_prefix, $table_name);
     echo $code . "\n";
