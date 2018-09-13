@@ -37,15 +37,7 @@ python retrieve_and_convert.py <config file>
 
 ### php
 
-```
-php -e retrieve_and_convert.php
-```
-
-or
-
-```
-php -e retrieve_and_convert.php <config file>
-```
+see [here](https://github.com/jmluang/sql-to-migration) for more details.
 
 # Output
 
