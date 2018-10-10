@@ -6,7 +6,7 @@ $config = json_decode(fread($config_file, filesize($config_filename)), 2);
 
 fclose($config_file);
 
-$timezone = array_key_exists('php_timezone', $config) ? $config['php_timezone'] : 'Asia/Singapore';
+$timezone = array_key_exists('php_timezone', $config) ? $config['php_timezone'] : 'Asia/Shanghai';
 date_default_timezone_set($timezone);
 
 $datetime_prefix_format = 'Y_m_d_His';
@@ -144,7 +144,7 @@ foreach ($table_names as $table_name){
     $table_schema_code = '    $table->timestamps();';
     $table_schema_codes []= ($table_schema_code);
 
-    $query = "SHOW INDEX FROM {$table_name};";
+    $query = "SHOW INDEX FROM `{$table_name}`;";
 
     $indexes = [];
     $results = $mysqli->query($query);
@@ -161,7 +161,7 @@ foreach ($table_names as $table_name){
         }
     }
 
-    $query = ("SHOW CREATE TABLE {$table_name};");
+    $query = ("SHOW CREATE TABLE `{$table_name}`;");
 
     $sql = [];
     $results = $mysqli->query($query);
