@@ -9,9 +9,6 @@ on:
     branches-ignore:
       - master
       - pre-release
-    branches:    
-      # Push events on master branch
-      - '*'
 
 jobs:
   deploy:
