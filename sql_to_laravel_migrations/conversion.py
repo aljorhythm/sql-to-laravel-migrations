@@ -22,7 +22,6 @@ nullable_field_types = [
 def table_to_class_name(table_name):
     return table_name.replace('_', ' ').title().replace(' ', '')
 
-
 def generate_class_code(classname, table_name, table_schema_codes, sql):
     code = """<?php
 
