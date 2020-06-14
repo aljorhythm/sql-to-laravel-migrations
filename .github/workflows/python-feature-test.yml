@@ -11,8 +11,7 @@ on:
       - pre-release
 
 jobs:
-  deploy:
-
+  test:
     runs-on: ubuntu-latest
 
     steps:
