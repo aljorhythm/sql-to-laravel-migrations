@@ -18,7 +18,6 @@ nullable_field_types = [
     'datetime'
 ]
 
-
 def table_to_class_name(table_name):
     return table_name.replace('_', ' ').title().replace(' ', '')
 
@@ -39,7 +38,7 @@ class {classname} extends Migration
     public function up()
     {{
         Schema::create('{table_name}', function (Blueprint $table) {{
-            {table_schema_codes}
+{table_schema_codes}
         }});
     }}
 
@@ -56,7 +55,7 @@ class {classname} extends Migration
 ?>
 """
     return code.format(sql=sql, classname="Create{0}Table".format(table_name.replace('_', ' ').title(
-    ).replace(' ', '')), table_schema_codes="\n        ".join(table_schema_codes), table_name=table_name)
+    ).replace(' ', '')), table_schema_codes="\n".join(["            " + line for line in table_schema_codes]), table_name=table_name)
 
 
 def generate_table_code(table_name, sql_rows, table_sql):
@@ -95,7 +94,7 @@ def generate_table_code(table_name, sql_rows, table_sql):
             appends.append('->unsigned()')
         if default is not None:
             if default == 'CURRENT_TIMESTAMP':
-                appends.append(r"->default(\DB::raw('{0}'))".format(default))
+                appends.append("->default(\DB::raw('{0}'))".format(default))
             else:
                 appends.append("->default('{0}')".format(default))
 
