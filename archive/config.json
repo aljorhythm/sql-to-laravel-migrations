@@ -1,0 +1,13 @@
+{
+  "debug": false,
+  "user" : "root",
+  "password" : "",
+  "host" : "localhost",
+  "port" : 3306,
+  "database" : "",
+  "exclude_tables" : [
+	  "migrations"
+  ],
+  "only_include_tables" : [
+  ]
+}
