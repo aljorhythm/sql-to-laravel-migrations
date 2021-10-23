@@ -42,7 +42,7 @@ $tables = [];
 if($result = $mysqli->query($query)){
   while($row = $result->fetch_array()){
     $tables []= $row;
-  };
+  }
   $result->close();
 }
 
@@ -57,7 +57,14 @@ if(count($only_include_tables) > 0){
 $field_type_name_mappings = [
     'tinyint' => 'tinyInteger',
     'int' => 'integer',
-    'varchar' => 'string'
+    'varchar' => 'string',
+    'int unsigned' => 'unsignedInteger',
+    'double unsigned' => 'unsignedDecimal',
+    'decimal unsigned' => 'unsignedDecimal',
+    'tinyint unsigned' => 'unsignedTinyInteger',
+    'smallint unsigned' => 'unsignedSmallInteger',
+    'mediumint unsigned' => 'unsignedMediumInteger',
+    'bigint unsigned' => 'unsignedBigInteger'
 ];
 
 $filter_field_type_params = [
@@ -95,6 +102,7 @@ foreach ($table_names as $table_name){
             }
 
             $field_type_split = explode('(', $field_type);
+            
 
             $field_type_name = $field_type_split[0];
             $field_type_name = strtolower($field_type_name);
@@ -103,9 +111,13 @@ foreach ($table_names as $table_name){
             $field_type_settings = count($field_type_split) > 1 ? explode(' ', $field_type_split[1]) : [];
 
             $field_type_params_string = count($field_type_split) > 1 ? explode(')', $field_type_split[1])[0] : '';
+            if(substr($field_type, 0, 4) ===  "enum"){
+                $field_type_params_string = "[ $field_type_params_string ]";
+            }
+            
             $field_type_params = $field_type_params_string != '' ? explode(',', $field_type_params_string) : [];
             $field_type_params = array_key_exists($field_type_name, $filter_field_type_params) ? $filter_field_type_params[$field_type_name]($field_type_params) : $field_type_params;
-
+            
             if($extra == 'auto_increment' && $field == 'id'){
                 $field_type_name = 'increments';
             }
@@ -138,7 +150,7 @@ foreach ($table_names as $table_name){
 
             $debug and $table_schema_codes []= "// " . json_encode($row);
             $table_schema_codes []= $table_schema_code;
-        };
+        }
     }
 
     $table_schema_code = '    $table->timestamps();';
@@ -147,11 +159,12 @@ foreach ($table_names as $table_name){
     $query = "SHOW INDEX FROM {$table_name};";
 
     $indexes = [];
-    $results = $mysqli->query($query);
-    while($row = $results->fetch_array()){
-        if ($row[2] != 'PRIMARY') {
-            $indexes[$row[2]]['is_unique'] = $row[1] ? false : true;
-            $indexes[$row[2]]['keys'][] = $row[4];
+    if($results = $mysqli->query($query)){
+        while($row = $results->fetch_array()){
+            if ($row[2] != 'PRIMARY') {
+                $indexes[$row[2]]['is_unique'] = $row[1] ? false : true;
+                $indexes[$row[2]]['keys'][] = $row[4];
+            }
         }
     }
 
@@ -164,9 +177,10 @@ foreach ($table_names as $table_name){
     $query = ("SHOW CREATE TABLE {$table_name};");
 
     $sql = [];
-    $results = $mysqli->query($query);
-    while($row = $results->fetch_array()){
-      $sql []= $row[1];
+    if($results = $mysqli->query($query)){
+        while($row = $results->fetch_array()){
+          $sql []= $row[1];
+        }
     }
     $sql = implode('\n', $sql);
 
