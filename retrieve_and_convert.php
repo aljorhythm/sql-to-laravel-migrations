@@ -94,15 +94,16 @@ foreach ($table_names as $table_name){
                 continue;
             }
 
-            $field_type_split = explode('(', $field_type);
+            $field_type_split = explode(' ', $field_type);
 
-            $field_type_name = $field_type_split[0];
+            $field_type_setting = $field_type_split[1];
+
+            $field_type_settings_split = explode('(', $field_type_split[0]);
+            $field_type_name = $field_type_settings_split[0];
             $field_type_name = strtolower($field_type_name);
             $field_type_name = array_key_exists($field_type_name, $field_type_name_mappings) ? $field_type_name_mappings[$field_type_name] : $field_type_name;
 
-            $field_type_settings = count($field_type_split) > 1 ? explode(' ', $field_type_split[1]) : [];
-
-            $field_type_params_string = count($field_type_split) > 1 ? explode(')', $field_type_split[1])[0] : '';
+            $field_type_params_string = explode(')', $field_type_settings_split[1])[0];
             $field_type_params = $field_type_params_string != '' ? explode(',', $field_type_params_string) : [];
             $field_type_params = array_key_exists($field_type_name, $filter_field_type_params) ? $filter_field_type_params[$field_type_name]($field_type_params) : $field_type_params;
 
@@ -114,7 +115,7 @@ foreach ($table_names as $table_name){
             if($null == 'YES' && in_array($field_type_name, $nullable_field_types)){
                 $appends []= '->nullable()';
             }
-            if(in_array('unsigned', $field_type_settings) && $field_type_name != 'increments'){
+            if('unsigned' === $field_type_setting && $field_type_name != 'increments'){
                 $appends []= '->unsigned()';
             }
             if(!is_null($default)){
