@@ -1,13 +1,15 @@
 {
-  "debug": false,
-  "user" : "root",
-  "password" : "",
-  "host" : "localhost",
-  "port" : 3306,
-  "database" : "",
+  "debug"			: false,
+  "user" 			: "root",
+  "password" 		: "",
+  "host" 			: "127.0.0.1",
+  "port" 			: 3306,
+  "database"		: "",
+  "connection_name" : "mysql",
   "exclude_tables" : [
 	  "migrations"
   ],
   "only_include_tables" : [
+  
   ]
 }
